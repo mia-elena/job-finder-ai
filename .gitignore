@@ -7,6 +7,9 @@
 *.pem
 Thumbs.db
 
+# Documentation
+CLAUDE.md
+
 # IDEs
 .vscode/
 .idea/

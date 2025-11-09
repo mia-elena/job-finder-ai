@@ -1,26 +1,51 @@
 # Job Finder AI
 
-A full-stack application for AI-powered job searching and tracking.
+A full-stack job search platform that scrapes job listings from multiple sources and uses AI to match them with your skills and preferences.
 
-## Project Structure
+## What It Does
 
-This is a monorepo containing both the frontend and backend applications:
+This app continuously pulls job listings from various job boards (Indeed, LinkedIn, Stack Overflow, etc.), analyzes them using OpenAI's API, and scores them based on how well they match your profile. Instead of manually searching multiple sites, you get a personalized feed of opportunities ranked by relevance.
 
+## Tech Stack
+
+**Backend**
+- Django 4.2 + Django REST Framework
+- PostgreSQL (production) / SQLite (development)
+- Celery + Redis for background tasks
+- OpenAI API for job analysis
+- BeautifulSoup4 + Selenium for web scraping
+
+**Frontend**
+- Next.js 15 with React 19
+- TypeScript
+- Tailwind CSS 4
+- Framer Motion for animations
+
+## Setup
+
+### Backend
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python3 manage.py migrate
+python3 manage.py runserver 8001
 ```
-job-finder-ai/
-├── frontend/          # Next.js frontend application
-├── backend/           # Django backend API
-└── README.md          # This file
+
+Create a `.env` file in the backend directory:
+```
+SECRET_KEY=your_secret_key
+DEBUG=True
+REDIS_URL=redis://localhost:6379/0
+OPENAI_API_KEY=your_openai_key  # optional but recommended
+ADZUNA_APP_ID=your_adzuna_id    # optional
+ADZUNA_API_KEY=your_adzuna_key  # optional
+JSEARCH_API_KEY=your_jsearch_key # optional
 ```
 
-## Prerequisites
-
-- **Frontend**: Node.js 18+ and npm
-- **Backend**: Python 3.11+, PostgreSQL, Redis
-
-## Quick Start
-
-### Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
@@ -28,98 +53,73 @@ npm install
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`
-
-For detailed frontend documentation, see [frontend/README.md](./frontend/README.md)
-
-### Backend Setup
-
-```bash
-cd backend
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
+Create a `.env.local` file:
+```
+NEXT_PUBLIC_API_URL=http://localhost:8001
 ```
 
-The backend API will be available at `http://localhost:8000`
+### Running Background Workers (Optional)
 
-For detailed backend documentation, see backend setup files.
+```bash
+# Terminal 1
+redis-server
 
-## Development Workflow
+# Terminal 2
+cd backend
+celery -A job_finder worker -l info
 
-### Running Both Apps Locally
+# Terminal 3
+cd backend
+celery -A job_finder beat -l info
+```
 
-1. Start the backend server (terminal 1):
-   ```bash
-   cd backend
-   python manage.py runserver
-   ```
+## Usage
 
-2. Start the frontend dev server (terminal 2):
-   ```bash
-   cd frontend
-   npm run dev
-   ```
+After starting the servers, you can:
 
-3. (Optional) Start Celery worker for background tasks (terminal 3):
-   ```bash
-   cd backend
-   celery -A job_finder worker -l info
-   ```
+1. **Scrape jobs**: `python3 manage.py api_refresh_jobs`
+2. **Score jobs**: `python3 manage.py score_jobs`
+3. **View dashboard**: Visit http://localhost:3000
 
-4. (Optional) Start Celery beat for scheduled tasks (terminal 4):
-   ```bash
-   cd backend
-   celery -A job_finder beat -l info
-   ```
+The app will show you jobs ranked by how well they match your preferences (skills, experience level, location, salary range).
 
-## Tech Stack
+## Key Features
 
-### Frontend
-- **Framework**: Next.js 15 (React 19)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4
-- **UI Components**: shadcn/ui, Radix UI
-- **Icons**: Heroicons, Lucide React
-- **Animation**: Framer Motion
+- Multi-source job scraping (19+ different scrapers)
+- AI-powered job analysis using GPT-3.5
+- Customizable scoring based on skills, experience, location, and salary
+- Real-time market intelligence (top skills in demand, salary ranges)
+- Email digests of top matches
+- Django admin panel for managing preferences
 
-### Backend
-- **Framework**: Django 4.2
-- **Language**: Python 3.11
-- **API**: Django REST Framework
-- **Task Queue**: Celery with Redis
-- **Database**: PostgreSQL
-- **AI Integration**: OpenAI API
-- **Web Scraping**: BeautifulSoup4, Selenium
+## Project Structure
+
+```
+├── backend/
+│   ├── jobs/           # Main Django app
+│   │   ├── models.py   # Database models
+│   │   ├── scrapers/   # Job board scrapers
+│   │   ├── ai_engine.py # OpenAI integration
+│   │   └── scoring.py  # Matching algorithm
+│   └── job_finder/     # Django settings
+└── frontend/
+    └── src/
+        ├── app/        # Next.js pages
+        ├── components/ # React components
+        └── lib/        # API client
+```
+
+## How It Works
+
+1. **Scraping**: Background tasks pull jobs from multiple sources
+2. **Analysis**: OpenAI extracts skills and analyzes job quality
+3. **Scoring**: Each job gets scored (0-100) based on your preferences
+4. **Display**: Jobs ranked by match score in the frontend
 
 ## Deployment
 
-### Frontend
-Deployed separately (likely Vercel or similar platform)
-
-### Backend
-Deployed on Render.com with:
-- PostgreSQL database
-- Redis for Celery
-- Gunicorn as WSGI server
-
-Configuration files: `backend/render.yaml`, `backend/Procfile`
-
-## Environment Variables
-
-Each application manages its own environment variables:
-- Frontend: `frontend/.env.local`
-- Backend: `backend/.env`
-
-Refer to each application's documentation for required environment variables.
-
-## Contributing
-
-1. Create a feature branch from `main`
-2. Make your changes in the appropriate directory (`frontend/` or `backend/`)
-3. Test your changes locally
-4. Submit a pull request
+The backend is configured for Render.com and the frontend for Vercel. Configuration files are included.
 
 ## License
 
-[Add your license here]
+MIT
