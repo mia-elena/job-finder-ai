@@ -86,6 +86,7 @@ backend/db.sqlite3
 backend/db.sqlite3-journal
 backend/staticfiles/
 backend/media/
+backend/scripts/
 
 # Celery
 celerybeat-schedule
